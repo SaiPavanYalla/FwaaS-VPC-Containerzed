@@ -1,0 +1,19 @@
+- hosts: localhost
+  gather_facts: no
+  become: yes
+  tasks:
+
+  - name: Creating container "{{containerName}}"
+    docker_container:
+      image: "{{imageName}}"
+      name: "{{containerName}}"
+      state: started
+      hostname: "{{containerName}}"
+      privileged: yes
+      interactive: yes
+      tty: yes
+      volumes:
+        - FwaaS-VPC-Containerzed/south_bound/log
+      networks:
+        - name: "{{ mgmtBridgeName }}"
+      purge_networks: yes
