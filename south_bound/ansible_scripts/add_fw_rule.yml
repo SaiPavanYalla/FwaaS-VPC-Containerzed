@@ -1,0 +1,100 @@
+- name: Configure iptables rule on FW
+  hosts: "{{host}}"
+  become: true
+  vars:
+    log_prefix: "IPTABLES-DROPPED: "    
+  tasks:
+
+    - name: Del rule to accept all established connection or is RELATED to an established connection
+      command: iptables -D FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+    - name: Add iptables rule for FORWARD chain
+      iptables:
+        chain: FORWARD
+        table: filter
+        source: "{{ src_ip }}"
+        destination: "{{ dest_ip }}"
+        protocol: "{{ protocol }}"
+        source_port: "{{ src_port }}"
+        destination_port: "{{ dest_port }}"
+        ctstate: "NEW,RELATED,ESTABLISHED"
+        limit: "{{ threshold }}/second"
+        jump: "{{ policy_action }}"
+        rule_num: 1
+        state: present
+      when: protocol != "icmp"
+
+    - name: Add iptables rule for ICMP in FORWARD chain
+      iptables:
+        chain: FORWARD
+        table: filter
+        source: "{{ src_ip }}"
+        destination: "{{ dest_ip }}"
+        ctstate: "NEW,RELATED,ESTABLISHED"
+        protocol: icmp
+        limit: "{{ threshold }}/second"
+        jump: ACCEPT
+        rule_num: 1
+        state: present
+      when: protocol == "icmp"
+
+
+    - name: Add iptables rule to log dropped packets
+      iptables:
+        chain: FORWARD
+        table: filter
+        source: "{{ src_ip }}"
+        destination: "{{ dest_ip }}"
+        protocol: "{{ protocol }}"
+        source_port: "{{ src_port }}"
+        destination_port: "{{ dest_port }}"
+        jump: "LOG"
+        log_prefix: "{{ log_prefix }}"
+        log_level: warning
+        rule_num: 2
+        state: present
+      when: protocol != "icmp"
+
+    - name: Add iptables rule to log dropped packets
+      iptables:
+        chain: FORWARD
+        table: filter
+        source: "{{ src_ip }}"
+        destination: "{{ dest_ip }}"
+        protocol: icmp
+        jump: "LOG"
+        log_prefix: "{{ log_prefix }}"
+        log_level: warning
+        rule_num: 2
+        state: present
+      when: protocol == "icmp"
+
+    - name: Add iptables rule for drop exceeded FORWARD chain
+      iptables:
+        chain: FORWARD
+        table: filter
+        source: "{{ src_ip }}"
+        destination: "{{ dest_ip }}"
+        protocol: "{{ protocol }}"
+        source_port: "{{ src_port }}"
+        destination_port: "{{ dest_port }}"
+        jump: DROP
+        rule_num: 3
+        state: present
+      when: protocol != "icmp"
+
+    - name: Add iptables rule for drop exceeded ICMP in FORWARD chain
+      iptables:
+        chain: FORWARD
+        table: filter
+        source: "{{ src_ip }}"
+        destination: "{{ dest_ip }}"
+        protocol: icmp
+        jump: DROP
+        rule_num: 3
+        state: present
+      when: protocol == "icmp"
+
+
+    - name: Add rule to accept all established connection or is RELATED to an established connection
+      command: iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
