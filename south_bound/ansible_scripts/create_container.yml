@@ -6,13 +6,18 @@
     container_name: c2
     image_name: ubuntuimage
   tasks:
-
-    - name: Create Docker container
-      ansible.builtin.expect:
-        command: docker run --net=none --name {{ container_name }} -it {{image_name}}
-        echo: yes
-      ignore_errors: yes
-
+    - name: Creating container
+      docker_container:
+        image: "{{ image_name }}"
+        name: "{{ container_name }}"
+        state: started
+        hostname: "{{ container_name }}"
+        privileged: yes
+        interactive: yes
+        tty: yes
+        networks:
+          - name: none
+        purge_networks: yes
    
     - name: Get container PID
       shell: docker inspect {{ container_name }} | grep '"Pid"' | awk '{ print $2 }' | sed 's/,.*//'
