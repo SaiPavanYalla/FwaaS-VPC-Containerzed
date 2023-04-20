@@ -1,0 +1,10 @@
+---
+- name: Create docker container and expose namespace
+  hosts: localhost
+  become: true
+  vars:
+    image_name: ubuntuImage
+  tasks: 
+    - name: Get container PID
+      shell: sudo docker build -t {{image_name}} .
+      
