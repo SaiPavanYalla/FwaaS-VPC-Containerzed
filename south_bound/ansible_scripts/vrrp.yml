@@ -1,25 +1,18 @@
 ---
-- name: Provision VMs and configure active standby links
-  hosts: localhost
-  connection: local
-  gather_facts: false
+- name: Configure VRRP
+  hosts: "{{ namespace_tenant }}{{ hostname }}"
 
   vars:
-    vm1_name: my_vm1
-    vm2_name: my_vm2
-    vm1_mac: "52:54:00:00:00:01"
-    vm2_mac: "52:54:00:00:00:02"
-    vm1_ip: 192.168.0.10
-    vm2_ip: 192.168.0.11
-    virtual_router_id: 100
-    vip_address: 192.168.0.100
+
+    virtual_ip: 10.7.7.100
+    vrrp_interface: enp8s0
+   
 
   tasks:
-
     - name: Configure active standby links
       become: true
       vars:
-        interface_name: eth0
+        interface_name: "{{vrrp_interface}}"
       block:
         - name: Install keepalived package
           apt:
@@ -28,7 +21,7 @@
 
         - name: Configure keepalived
           template:
-            src: keepalived.conf.j2
+            src: "{{src_dir}}/keepalived.conf.j2"
             dest: /etc/keepalived/keepalived.conf
             mode: "0644"
 
@@ -37,27 +30,3 @@
             name: keepalived
             state: started
 
-
-keepalived.conf.j2
-vrrp_script chk_http_port {
-    script "/usr/bin/nc -z -w 2 {{ vip_address }} 80"
-    interval 2
-    weight 2
-}
-
-vrrp_instance VI_1 {
-    state MASTER
-    interface {{ interface_name }}
-    virtual_router_id {{ virtual_router_id }}
-    priority 101
-    authentication {
-        auth_type PASS
-        auth_pass mypassword
-    }
-    virtual_ipaddress {
-        {{ vip_address }}/24 dev {{ interface_name }}
-    }
-    track_script {
-        chk_http_port
-    }
-}
