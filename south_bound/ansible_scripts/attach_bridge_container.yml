@@ -4,26 +4,27 @@
   vars:
     vm_net: "{{ namespace_tenant }}_{{vm_net_name}}_BR"
     vm_name: "{{ namespace_tenant }}{{ hostname }}"
+    veth1:  "{{ vm_net[:-3] }}_{{ vm_name[-3:] }}_1"
+    veth0: "{{ vm_net[:-3] }}_{{ vm_name[-3:] }}_0"
   tasks:
     
 
     - name: Create veth pair
-      command: ip link add {{ vm_net }}_{{ vm_name[-3:] }}_0 type veth peer name {{ vm_net }}_{{ vm_name[-3:] }}_1
+      command: ip link add {{veth0}} type veth peer name {{veth1}}
 
     - name: Add veth pair to OVS bridge
-      command: ovs-vsctl add-port {{ vm_net }} {{ vm_net }}_{{ vm_name[-3:] }}_0
+      command: ovs-vsctl add-port {{ vm_net }} {{veth0}}
    
 
     - name: Move veth pair to namespace
-      command: ip link set {{ vm_net }}_{{ vm_name[-3:] }}_1 netns {{ vm_name }}
-    
-    - name: assign as DHClient for veth_t
-      command: ip netns exec {{ vm_name }} dhclient {{ vm_net }}_{{ vm_name[-3:] }}_1
-
-
-
+      command: ip link set {{veth1}} netns {{ vm_name }}
+  
     - name: Set veth pair up
-      command: ip link set {{ vm_net }}_{{ vm_name[-3:] }}_0 up
+      command: ip link set dev {{veth0}} up
 
     - name: Set veth pair up in namespace
-      command: ip netns exec {{ vm_name }} ip link set {{ vm_net }}_{{ vm_name[-3:] }}_1 up
+      command: ip netns exec {{ vm_name }} ip link set dev {{veth1}} up
+
+
+    - name: assign as DHClient for veth_t
+      command: ip netns exec {{ vm_name }} dhclient {{veth1}}

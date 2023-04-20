@@ -1,3 +1,4 @@
+---
 - name: Create and configure OVS bridge
   hosts: localhost
   become: yes
@@ -52,7 +53,6 @@
         - "dhcp-no-override"
         - "dhcp-authoritative"
         - "dhcp-lease-max=253"
-        - "dhcp-option=option:router,{{tenant_net_gw_ip}}"
         - "dhcp-option=option:dns-server,8.8.8.8"
         - "dhcp-leasefile=/var/lib/misc/dnsmasq.leases"
 
