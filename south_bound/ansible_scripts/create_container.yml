@@ -1,16 +1,22 @@
-- hosts: localhost
-  gather_facts: no
-  become: yes
+---
+- name: Create docker container and expose namespace
+  hosts: localhost
+  become: true
+  vars:
+    container_name: c2
+    image_name: ubuntuImage
   tasks:
+    - name: Create Docker container
+      command: sudo docker run --net=none --name {{ container_name }} -it {{image_name}}
+   
+    - name: Get container PID
+      shell: docker inspect {{ container_name }} | grep '"Pid"' | awk '{ print $2 }' | sed 's/,.*//'
+      register: container_pid
 
-  - name: Creating container "{{containerName}}"
-    docker_container:
-      image: "{{imageName}}"
-      name: "{{containerName}}"
-      state: started
-      hostname: "{{containerName}}"
-      privileged: yes
-      interactive: yes
-      tty: yes
-      volumes:
-        - FwaaS-VPC-Containerzed/south_bound/log
+    - name: Create net namespace
+      shell: ln -sf /proc/{{ container_pid.stdout }}/ns/net /var/run/netns/{{ container_name }}
+      
+    - name: Create net namespace
+      shell: docker exec {{ container_name }} service ssh start
+      
+    
