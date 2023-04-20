@@ -4,10 +4,15 @@
   become: true
   vars:
     container_name: c2
-    image_name: ubuntuImage
+    image_name: ubuntuimage
   tasks:
+
     - name: Create Docker container
-      command: sudo docker run --net=none --name {{ container_name }} -it {{image_name}}
+      ansible.builtin.expect:
+        command: docker run --net=none --name {{ container_name }} -it {{image_name}}
+        echo: yes
+      ignore_errors: yes
+
    
     - name: Get container PID
       shell: docker inspect {{ container_name }} | grep '"Pid"' | awk '{ print $2 }' | sed 's/,.*//'
@@ -15,8 +20,13 @@
 
     - name: Create net namespace
       shell: ln -sf /proc/{{ container_pid.stdout }}/ns/net /var/run/netns/{{ container_name }}
-      
-    - name: Create net namespace
+
+    - name: Wait for container to start
+      command: docker inspect --format="{{ '{{.State.Running}}' }}" {{ container_name }}
+      register: container_status
+      until: container_status.stdout == "true"
+      retries: 6
+      delay: 5
+
+    - name: Start SSH service
       shell: docker exec {{ container_name }} service ssh start
-      
-    

@@ -1,0 +1,30 @@
+---
+- name: Attach bridge to a container using a veth pair
+  hosts: localhost
+  become: true
+  vars:
+    vm_net: "{{ namespace_tenant }}_{{vm_net_name}}_BR"
+    vm_name: "{{ namespace_tenant }}{{ hostname }}"
+  tasks:
+    
+
+    - name: Create veth pair
+      shell: sudo ip link add {{ vm_net[:-3] }}_0 type veth peer name {{ vm_net[:-3] }}_1
+	  
+	  - name: Add veth pair to OVS bridge
+      shell: sudo ovs-vsctl add-port {{ vm_net }} {{ vm_net[:-3] }}_0
+   
+
+    - name: Move veth pair to namespace
+      shell: sudo ip link set {{ vm_net[:-3] }}_1 netns {{ vm_name }}
+    
+    - name: assign as DHClient for veth_t
+      command: ip netns exec {{ vm_name }} dhclient {{ vm_net[:-3] }}_1
+
+
+
+    - name: Set veth pair up
+      shell: sudo ip link set {{ vm_net[:-3] }}_0 up
+
+    - name: Set veth pair up in namespace
+      shell: sudo ip netns exec {{ vm_name }} ip link set {{ vm_net[:-3] }}_1 up

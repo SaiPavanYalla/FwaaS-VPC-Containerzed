@@ -1,33 +1,30 @@
 ---
-- name: Create OVS bridge and attach it to a namespace using a veth pair
+- name: Attach bridge to a container using a veth pair
   hosts: localhost
   become: true
   vars:
-    ovs_bridge_name: c1br
-    namespace_name: c2
-    veth_pair_name: c2veth
-    ip_address_ns: 192.168.1.3
+    vm_net: "{{ namespace_tenant }}_{{vm_net_name}}_BR"
+    vm_name: "{{ namespace_tenant }}{{ hostname }}"
   tasks:
-    - name: Create OVS bridge
-      shell: sudo ovs-vsctl add-br {{ ovs_bridge_name }}
-	  
-	  
+    
+
     - name: Create veth pair
-      shell: sudo ip link add {{ veth_pair_name }} type veth peer name {{ veth_pair_name }}_ns
+      shell: sudo ip link add {{ vm_net }}_{{ vm_name[-3:] }}_0 type veth peer name {{ vm_net }}_{{ vm_name[-3:] }}_1
 	  
 	  - name: Add veth pair to OVS bridge
-      shell: sudo ovs-vsctl add-port {{ ovs_bridge_name }} {{ veth_pair_name }}
+      shell: sudo ovs-vsctl add-port {{ vm_net }} {{ vm_net }}_{{ vm_name[-3:] }}_0
    
 
     - name: Move veth pair to namespace
-      shell: sudo ip link set {{ veth_pair_name }}_ns netns {{ namespace_name }}
+      shell: sudo ip link set {{ vm_net }}_{{ vm_name[-3:] }}_1 netns {{ vm_name }}
     
+    - name: assign as DHClient for veth_t
+      command: ip netns exec {{ vm_name }} dhclient {{ vm_net }}_{{ vm_name[-3:] }}_1
 
-    - name: Add IP address to veth pair in namespace
-      shell: sudo ip netns exec {{ namespace_name }} ip addr add {{ ip_address_ns }}/24 dev {{ veth_pair_name }}_ns
+
 
     - name: Set veth pair up
-      shell: sudo ip link set {{ veth_pair_name }} up
+      shell: sudo ip link set {{ vm_net }}_{{ vm_name[-3:] }}_0 up
 
     - name: Set veth pair up in namespace
-      shell: sudo ip netns exec {{ namespace_name }} ip link set {{ veth_pair_name }}_ns up
+      shell: sudo ip netns exec {{ vm_name }} ip link set {{ vm_net }}_{{ vm_name[-3:] }}_1 up
