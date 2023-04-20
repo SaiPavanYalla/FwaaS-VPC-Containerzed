@@ -14,7 +14,7 @@ playbook_path = os.path.join(cwd, "ansible_scripts","create_pgw.yml")
 
 command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
 
-sudo_password = "mmrj2023"
+sudo_password = "csc792"
 
 
 process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -39,7 +39,7 @@ src_dir_FW = cwd
 extra_vars = { 'src_dir_FW': src_dir_FW  }
 
 command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-sudo_password = "mmrj2023"
+sudo_password = "csc792"
 
 for key, value in extra_vars.items():
     command.extend(['-e', f'{key}={value}'])

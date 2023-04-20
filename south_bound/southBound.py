@@ -31,9 +31,10 @@ def create_network(network,network_data,tenant,i):
         dhcp_start = ovs_network_address.network_address + 2
         dhcp_end = ovs_network_address.broadcast_address - 1
         tenant_net_gw_ip = str(ovs_network_address.network_address + 1) + str(cidr_notation)
-        extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip }
+        src_dir = os.path.join(cwd , "templates")
+        extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip ,'src_dir': src_dir}
         command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-        sudo_password = "mmrj2023"
+        sudo_password = "csc792"
 
         for key, value in extra_vars.items():
             command.extend(['-e', f'{key}={value}'])
@@ -56,22 +57,22 @@ def create_network(network,network_data,tenant,i):
 
 def create_vm(vm,network_data,tenant,j):
     inventory_path = os.path.join(cwd, "inventory.ini")
-    playbook_path = os.path.join(cwd, "ansible_scripts","create_vm.yml")
+    playbook_path = os.path.join(cwd, "ansible_scripts","create_container.yml")
     hostname =  vm["vm_name"]
     namespace_tenant =  network_data[tenant]["namespace_tenant"]
-    vm_vcpus = vm["vm_vcpus"]
-    src_dir = os.path.join(cwd , "templates")
-    vm_ram_mb =  vm["vm_ram_mb"]
-    vm_disksize_gb = int(vm["vm_disk_size"])
+    # vm_vcpus = vm["vm_vcpus"]
+    # src_dir = os.path.join(cwd , "templates")
+    # vm_ram_mb =  vm["vm_ram_mb"]
+    # vm_disksize_gb = int(vm["vm_disk_size"])
 
-    extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant , 'vm_vcpus': vm_vcpus ,'src_dir': src_dir ,'vm_ram_mb': vm_ram_mb ,'vm_disksize_gb': vm_disksize_gb }
+    extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant }
 
     command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-    sudo_password = "mmrj2023"
+    sudo_password = "csc792"
 
     for key, value in extra_vars.items():
-        if key == "vm_disksize_gb" or key == "vm_vcpus" or key == "vm_ram_mb" :
-            value = int(value)
+        # if key == "vm_disksize_gb" or key == "vm_vcpus" or key == "vm_ram_mb" :
+        #     value = int(value)
         command.extend(['-e', f'{key}={value}'])
 
     
@@ -91,16 +92,16 @@ def create_vm(vm,network_data,tenant,j):
 
 def attach_interface(vm,network_data,tenant,connection,k):
     inventory_path = os.path.join(cwd, "inventory.ini")
-    playbook_path = os.path.join(cwd, "ansible_scripts","attach_ovs_bridge.yml")
+    playbook_path = os.path.join(cwd, "ansible_scripts","attach_bridge_container.yml")
 
     namespace_tenant = network_data[tenant]["namespace_tenant"]
     hostname = vm["vm_name"]
     vm_net_name = connection
-    src_dir= os.path.join(cwd , "templates")
-    extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'src_dir': src_dir ,'vm_net_name': vm_net_name }
+    #src_dir= os.path.join(cwd , "templates")
+    extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
     command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-    sudo_password = "mmrj2023"
+    sudo_password = "csc792"
 
     for key, value in extra_vars.items():
         command.extend(['-e', f'{key}={value}'])
@@ -116,7 +117,7 @@ def attach_interface(vm,network_data,tenant,connection,k):
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
         network_data[tenant]["VMs"][k]["connection_status"][connection] = "Ready"
         
-        print(f"Ansible playbook failed with error while creating a VM :\n{output}")
+        print(f"Ansible playbook failed with error when connection between {hostname} and {vm_net_name} in {namespace_tenant} is being created  :\n{output}")
     else:
         
         network_data[tenant]["VMs"][k]["connection_status"][connection] = "Completed"
@@ -155,6 +156,7 @@ for tenant in  network_data:
                         if connection == network["network_name"]:
                             if network["status"] == "Completed":
                                 attach_interface(vm,network_data,tenant,connection,k)
+                                #print(k)
         k=k+1
     
 
@@ -163,7 +165,7 @@ for tenant in  network_data:
          #Create int fw net
         if  firewall_data["status"]["internal_net_status"] == "Ready":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","create_fw_ovs_bridge.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","create_ovs_bridge.yml")
             mask = "255.255.255.0"
             binary_octets = [bin(int(octet))[2:].zfill(8) for octet in mask.split(".")]
             cidr_prefix = sum([bin_octet.count("1") for bin_octet in binary_octets])
@@ -174,9 +176,10 @@ for tenant in  network_data:
             dhcp_start = ovs_network_address.network_address + 2
             dhcp_end = ovs_network_address.network_address + 3
             tenant_net_gw_ip = str(ovs_network_address.network_address + 1) + str(cidr_notation)
-            extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip }
+            src_dir= os.path.join(cwd , "templates")
+            extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip ,'src_dir':src_dir}
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -197,20 +200,21 @@ for tenant in  network_data:
         #Create ext fw net
         if  firewall_data["status"]["external_net_status"] == "Ready":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","create_fw_ovs_bridge.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","create_ovs_bridge.yml")
             mask = "255.255.255.0"
             binary_octets = [bin(int(octet))[2:].zfill(8) for octet in mask.split(".")]
             cidr_prefix = sum([bin_octet.count("1") for bin_octet in binary_octets])
             cidr_notation = f"/{cidr_prefix}"
             ovs_network_address = ipaddress.IPv4Network(("10.8.8.0", mask))
             namespace_tenant = network_data[tenant]["namespace_tenant"]
-            vm_net_name = "FwE" 
+            vm_net_name = "FwE"
             dhcp_start = ovs_network_address.network_address + 2
             dhcp_end = ovs_network_address.network_address + 3
             tenant_net_gw_ip = str(ovs_network_address.network_address + 1) + str(cidr_notation)
-            extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip }
+            src_dir= os.path.join(cwd , "templates")
+            extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip,'src_dir':src_dir }
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -238,19 +242,19 @@ for tenant in  network_data:
         #Firewall VM creation
         if  firewall_data["status"]["firewall_status"] == "Ready":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","create_vm.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","create_container.yml")
             
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             hostname =  "FW1"
-            vm_vcpus = firewall_data["firewall_vcpus"]
-            src_dir = os.path.join(cwd , "templates")
-            vm_ram_mb =  firewall_data["firewall_ram_mb"]
-            vm_disksize_gb = firewall_data["firewall_disk_size"]
+            # vm_vcpus = firewall_data["firewall_vcpus"]
+            # src_dir = os.path.join(cwd , "templates")
+            # vm_ram_mb =  firewall_data["firewall_ram_mb"]
+            # vm_disksize_gb = firewall_data["firewall_disk_size"]
 
-            extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant , 'vm_vcpus': vm_vcpus ,'src_dir': src_dir ,'vm_ram_mb': vm_ram_mb ,'vm_disksize_gb': vm_disksize_gb }
+            extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 if key == "vm_disksize_gb" or key == "vm_vcpus" or key == "vm_ram_mb" :
@@ -273,16 +277,16 @@ for tenant in  network_data:
         #attach management to firewall
         if  firewall_data["status"]["mgmt_net_attach_status"] == "Ready" and firewall_data["status"]["firewall_status"] == "Completed" :
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","attach_mgmt.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","attach_container_mgmt.yml")
            
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             last_mac ='{:02X}'.format(int(namespace_tenant.replace("T","")))
             vm_name = namespace_tenant + "FW1" 
             src_dir= os.path.join(cwd , "templates")
-            extra_vars = { 'namespace_tenant': namespace_tenant ,'vm_name': vm_name, 'last_mac': last_mac ,'src_dir': src_dir }
+            extra_vars = { 'vm_name': vm_name, 'last_mac': last_mac  }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -311,16 +315,18 @@ for tenant in  network_data:
         #Attach int fw net
         if  firewall_data["status"]["internal_net_attach_status"] == "Ready" and firewall_data["status"]["firewall_status"] == "Completed" and firewall_data_overview["status"]["internal_net_status"] == "Completed":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","attach_ovs_bridge.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","attach_bridge_container.yml")
+
+            print("inside")
 
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             hostname =  "FW1"
             vm_net_name = "FwI"
-            src_dir= os.path.join(cwd , "templates")
-            extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'src_dir': src_dir ,'vm_net_name': vm_net_name }
+            #src_dir= os.path.join(cwd , "templates")
+            extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -346,16 +352,16 @@ for tenant in  network_data:
         #Attach ext fw net
         if  firewall_data["status"]["external_net_attach_status"] == "Ready" and firewall_data["status"]["firewall_status"] == "Completed" and firewall_data_overview["status"]["external_net_status"] == "Completed":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","attach_ovs_bridge.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","attach_bridge_container.yml")
 
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             hostname =  "FW1"
             vm_net_name = "FwE"
-            src_dir= os.path.join(cwd , "templates")
-            extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'src_dir': src_dir ,'vm_net_name': vm_net_name }
+            #src_dir= os.path.join(cwd , "templates")
+            extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -382,14 +388,14 @@ for tenant in  network_data:
         #create firewall control plane
         if firewall_data["status"]["firewall_status"] == "Completed" and firewall_data["status"]["internal_net_attach_status"] == "Completed" and  firewall_data["status"]["external_net_attach_status"] == "Completed" and firewall_data["status"]["fw_control_plane"] == "Ready":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","fw_control_plane.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","fw_container_control_plane.yml")
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             hostname = "FW1"
 
             extra_vars = {'hostname': hostname ,'namespace_tenant' : namespace_tenant  }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -416,19 +422,19 @@ for tenant in  network_data:
         #Firewall VM creation
         if  firewall_data["status"]["firewall_status"] == "Ready":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","create_vm.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","create_container.yml")
             
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             hostname =  "FW2"
-            vm_vcpus = firewall_data["firewall_vcpus"]
-            src_dir = os.path.join(cwd , "templates")
-            vm_ram_mb =  firewall_data["firewall_ram_mb"]
-            vm_disksize_gb = firewall_data["firewall_disk_size"]
+            # vm_vcpus = firewall_data["firewall_vcpus"]
+            # src_dir = os.path.join(cwd , "templates")
+            # vm_ram_mb =  firewall_data["firewall_ram_mb"]
+            # vm_disksize_gb = firewall_data["firewall_disk_size"]
 
-            extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant , 'vm_vcpus': vm_vcpus ,'src_dir': src_dir ,'vm_ram_mb': vm_ram_mb ,'vm_disksize_gb': vm_disksize_gb }
+            extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant}
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 if key == "vm_disksize_gb" or key == "vm_vcpus" or key == "vm_ram_mb" :
@@ -451,16 +457,16 @@ for tenant in  network_data:
         #attach management to firewall
         if  firewall_data["status"]["mgmt_net_attach_status"] == "Ready" and firewall_data["status"]["firewall_status"] == "Completed" :
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","attach_mgmt.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","attach_container_mgmt.yml")
            
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             last_mac ='{:02X}'.format(int(namespace_tenant.replace("T",""))+100)
             vm_name = namespace_tenant + "FW2" 
-            src_dir= os.path.join(cwd , "templates")
-            extra_vars = { 'namespace_tenant': namespace_tenant ,'vm_name': vm_name, 'last_mac': last_mac ,'src_dir': src_dir }
+            #src_dir= os.path.join(cwd , "templates")
+            extra_vars = { 'vm_name': vm_name, 'last_mac': last_mac }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -486,16 +492,16 @@ for tenant in  network_data:
         firewall_data_overview =  network_data[tenant]["Firewall"]
         if  firewall_data["status"]["internal_net_attach_status"] == "Ready" and firewall_data["status"]["firewall_status"] == "Completed" and firewall_data_overview["status"]["internal_net_status"] == "Completed" :
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","attach_ovs_bridge.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","attach_bridge_container.yml")
 
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             hostname =  "FW2"
             vm_net_name = "FwI"
-            src_dir= os.path.join(cwd , "templates")
-            extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'src_dir': src_dir ,'vm_net_name': vm_net_name }
+            #src_dir= os.path.join(cwd , "templates")
+            extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -521,16 +527,16 @@ for tenant in  network_data:
         #Attach ext fw net
         if  firewall_data["status"]["external_net_attach_status"] == "Ready" and firewall_data["status"]["firewall_status"] == "Completed" and firewall_data_overview["status"]["external_net_status"] == "Completed":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","attach_ovs_bridge.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","attach_bridge_container.yml")
 
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             hostname =  "FW2"
             vm_net_name = "FwE"
-            src_dir= os.path.join(cwd , "templates")
-            extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'src_dir': src_dir ,'vm_net_name': vm_net_name }
+            # src_dir= os.path.join(cwd , "templates")
+            extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -554,14 +560,14 @@ for tenant in  network_data:
     #create firewall control plane
         if firewall_data["status"]["firewall_status"] == "Completed" and firewall_data["status"]["internal_net_attach_status"] == "Completed" and  firewall_data["status"]["external_net_attach_status"] == "Completed" and firewall_data["status"]["fw_control_plane"] == "Ready":
             inventory_path = os.path.join(cwd, "inventory.ini")
-            playbook_path = os.path.join(cwd, "ansible_scripts","fw_control_plane.yml")
+            playbook_path = os.path.join(cwd, "ansible_scripts","fw_container_control_plane.yml")
             namespace_tenant =  network_data[tenant]["namespace_tenant"]
             hostname = "FW2"
 
             extra_vars = {'hostname': hostname ,'namespace_tenant' : namespace_tenant  }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -595,7 +601,7 @@ for tenant in  network_data:
             extra_vars = {'namespace_tenant': namespace_tenant   }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -623,17 +629,17 @@ for tenant in  network_data:
             router_id = 1
             vrrp_priority = 101
             state = "MASTER"
-            src_dir = os.path.join(cwd , "templates")
+            #src_dir = os.path.join(cwd , "templates")
             extra_vars = {'namespace_tenant': namespace_tenant,
               'hostname': hostname,
             'router_id': router_id,
              'vrrp_priority': vrrp_priority,
-            'state': state,
-            'src_dir' :src_dir   }
+            'state': state
+              }
             
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])
@@ -661,16 +667,15 @@ for tenant in  network_data:
             router_id = 2
             vrrp_priority = 100
             state = "BACKUP"
-            src_dir = os.path.join(cwd , "templates")
+            #src_dir = os.path.join(cwd , "templates")
             extra_vars = {'namespace_tenant': namespace_tenant,
               'hostname': hostname,
             'router_id': router_id,
              'vrrp_priority': vrrp_priority,
-            'state': state ,
-            'src_dir':src_dir  }
+            'state': state   }
 
             command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
-            sudo_password = "mmrj2023"
+            sudo_password = "csc792"
 
             for key, value in extra_vars.items():
                 command.extend(['-e', f'{key}={value}'])

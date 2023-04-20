@@ -5,10 +5,47 @@
   vars:
 
     virtual_ip: 10.7.7.100
-    vrrp_interface: enp8s0
-   
+    vm_net_in: "{{ namespace_tenant }}_FwI_BR"
+    vm_name: "{{ namespace_tenant }}{{ hostname }}"
+    vrrp_interface: {{ vm_net_in }}_{{ vm_name[-3:] }}_1
+    vrrp_loc: "keepalived.conf.j2" 
 
   tasks:
+    - name: Create keepalived directory
+      become: true
+      file:
+        path: "/etc/keepalived/"
+        state: present
+    
+    - name: Create vrrp conf file
+      become: true
+      file:
+        path: "{{vrrp_loc}}"
+        state: touch
+    
+    - name: Add lines to vrrp conf file
+      lineinfile:
+        path: "{{vrrp_loc}}"
+        line: "{{ item }}"
+      with_items:
+        - "global_defs {"
+        - "   router_id LVS_DEVEL"
+        - "}"
+        - "vrrp_instance VI_1 {"
+        - "    state {{ state }}"
+        - "    interface {{vrrp_interface}}"
+        - "    virtual_router_id {{router_id}}"
+        - "    priority {{vrrp_priority}}"
+        - "    virtual_ipaddress {"
+        - "        {{virtual_ip}}"
+        - "    }"
+        - "    authentication {"
+        - "        auth_type PASS"
+        - "        auth_pass mypassword"
+        - "    }"
+        - "}"
+
+
     - name: Configure active standby links
       become: true
       vars:
@@ -21,7 +58,7 @@
 
         - name: Configure keepalived
           template:
-            src: "{{src_dir}}/keepalived.conf.j2"
+            src: "keepalived.conf.j2"
             dest: /etc/keepalived/keepalived.conf
             mode: "0644"
 

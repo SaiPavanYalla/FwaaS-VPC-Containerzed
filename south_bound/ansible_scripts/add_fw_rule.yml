@@ -1,12 +1,12 @@
 - name: Configure iptables rule on FW
-  hosts: "{{host}}"
+  hosts: localhost
   become: true
   vars:
     log_prefix: "IPTABLES-DROPPED: "    
   tasks:
 
     - name: Del rule to accept all established connection or is RELATED to an established connection
-      command: iptables -D FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+      command: ip netns exec {{vm_name}} iptables -D FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
     - name: Add iptables rule for FORWARD chain
       iptables:
@@ -22,6 +22,7 @@
         jump: "{{ policy_action }}"
         rule_num: 1
         state: present
+        network_namespace: "{{vm_name}}"
       when: protocol != "icmp"
 
     - name: Add iptables rule for ICMP in FORWARD chain
@@ -36,6 +37,7 @@
         jump: ACCEPT
         rule_num: 1
         state: present
+        network_namespace: "{{vm_name}}"
       when: protocol == "icmp"
 
 
@@ -53,6 +55,7 @@
         log_level: warning
         rule_num: 2
         state: present
+        network_namespace: "{{vm_name}}"
       when: protocol != "icmp"
 
     - name: Add iptables rule to log dropped packets
@@ -67,6 +70,7 @@
         log_level: warning
         rule_num: 2
         state: present
+        network_namespace: "{{vm_name}}"
       when: protocol == "icmp"
 
     - name: Add iptables rule for drop exceeded FORWARD chain
@@ -81,6 +85,7 @@
         jump: DROP
         rule_num: 3
         state: present
+        network_namespace: "{{vm_name}}"
       when: protocol != "icmp"
 
     - name: Add iptables rule for drop exceeded ICMP in FORWARD chain
@@ -93,8 +98,9 @@
         jump: DROP
         rule_num: 3
         state: present
+        network_namespace: "{{vm_name}}"
       when: protocol == "icmp"
 
 
     - name: Add rule to accept all established connection or is RELATED to an established connection
-      command: iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+      command: ip netns exec {{vm_name}} iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT

@@ -2,45 +2,43 @@
   hosts: localhost
   become: true    
   vars:
-    IN_int: "{{ vm_net[:-3] }}_1"
-    OUT_int: "enp9s0"
+    vm_net_in: "{{ namespace_tenant }}_FwI_BR"
+    vm_net_out: "{{ namespace_tenant }}_FwE_BR"
+    vm_name: "{{ namespace_tenant }}{{ hostname }}"
+    IN_int: {{ vm_net_in }}_{{ vm_name[-3:] }}_1
+    OUT_int: {{ vm_net_out }}_{{ vm_name[-3:] }}_1
     OUT_gw: "10.8.8.1"
     IN_gw: "10.7.7.1"
   tasks:
 
     - name: Add iptables rule for NAT public traffic
-      command: sudo ip netns exec iptables -t nat -I POSTROUTING 1 -o {{ OUT_int }} -j MASQUERADE
+      command: ip netns exec {{vm_name}} iptables -t nat -I POSTROUTING 1 -o {{ OUT_int }} -j MASQUERADE
       
-    - name: Enable IP forwarding
-      sysctl:
-        name: net.ipv4.ip_forward
-        value: 1
-        state: present
-        reload: yes
+    
 
     - name: Add rule to accept all established connection or is related to an established connection
-      command: iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+      command: ip netns exec {{vm_name}} iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
     - name: Add iptables rule to drop all invalid packets
-      command: iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+      command: ip netns exec {{vm_name}} iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
 
     - name: Add rule to accept all established connection or is related to an established connection
-      command: iptables -I FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+      command: ip netns exec {{vm_name}} iptables -I FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
     - name: Add iptables rule to drop all invalid packets
-      command: iptables -I FORWARD -m conntrack --ctstate INVALID -j DROP
+      command: ip netns exec {{vm_name}} iptables -I FORWARD -m conntrack --ctstate INVALID -j DROP
 
     - name: Add rule to default deny  
-      command: iptables -P FORWARD DROP
+      command: ip netns exec {{vm_name}} iptables -P FORWARD DROP
 
     - name: Add route for the internal 10.0.0.0/8 network
-      command: ip route add 10.0.0.0/8 via {{ IN_gw }} dev {{ IN_int }}
+      command: ip netns exec {{vm_name}} ip route add 10.0.0.0/8 via {{ IN_gw }} dev {{ IN_int }}
 
     - name: Add route for the internal 172.16.0.0/12 network
-      command: ip route add 172.16.0.0/12 via {{ IN_gw }} dev {{ IN_int }}
+      command: ip netns exec {{vm_name}} ip route add 172.16.0.0/12 via {{ IN_gw }} dev {{ IN_int }}
 
     - name: Add route for the internal 192.168.0.0/16 network
-      command: ip route add 192.168.0.0/16 via {{ IN_gw }} dev {{ IN_int }}
+      command: ip netns exec {{vm_name}} ip route add 192.168.0.0/16 via {{ IN_gw }} dev {{ IN_int }}
       
     - name: Add default route towards external interface
-      command: ip route add default via {{ OUT_gw }} dev {{ OUT_int }}
+      command: ip netns exec {{vm_name}} ip route add default via {{ OUT_gw }} dev {{ OUT_int }}

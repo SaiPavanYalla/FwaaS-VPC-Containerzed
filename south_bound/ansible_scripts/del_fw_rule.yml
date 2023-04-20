@@ -1,5 +1,5 @@
 - name: Configure iptables rule on FW
-  hosts: "{{host}}"
+  hosts: localhost
   become: true    
   vars:
     log_prefix: "IPTABLES-DROPPED: "
@@ -16,6 +16,7 @@
         limit: "{{ threshold }}/second"
         jump: "{{policy_action}}"
         state: absent
+        network_namespace: "{{vm_name}}"
 
     - name: Del iptables rule to log dropped packets
       iptables:
@@ -31,3 +32,4 @@
         log_prefix: "{{ log_prefix }}"
         log_level: warning
         state: absent
+        network_namespace: "{{vm_name}}"
