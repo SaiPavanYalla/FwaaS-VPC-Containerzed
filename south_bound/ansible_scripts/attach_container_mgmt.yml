@@ -20,12 +20,12 @@
     
     - name: assign mac address for veth_t
       command: ip netns exec {{ vm_name }} ip link set dev {{ vm_net }}_{{ vm_name }}_1  address 52:54:00:10:09:{{ namespace_ID }}
-    
-    - name: assign as DHClient for veth_t
-      command: ip netns exec {{ vm_name }} dhclient {{ vm_net }}_{{ vm_name }}_1
-
+   
     - name: Set veth pair up
       command: ip link set {{ vm_net }}_{{ vm_name }}_0 up
 
     - name: Set veth pair up in namespace
       command: ip netns exec {{ vm_name }} ip link set {{ vm_net }}_{{ vm_name }}_1 up
+     
+    - name: assign as DHClient for veth_t
+      command: ip netns exec {{ vm_name }} dhclient {{ vm_net }}_{{ vm_name }}_1
