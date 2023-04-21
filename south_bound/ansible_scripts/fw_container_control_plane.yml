@@ -1,20 +1,18 @@
 - name: Configure Initial setup on FW
   hosts: localhost
-  become: true    
+  become: true
   vars:
-    vm_net_in: "{{ namespace_tenant }}_FwI_BR"
-    vm_net_out: "{{ namespace_tenant }}_FwE_BR"
+    vm_net_in: "{{ namespace_tenant }}_FwI"
+    vm_net_out: "{{ namespace_tenant }}_FwE"
     vm_name: "{{ namespace_tenant }}{{ hostname }}"
-    IN_int: {{ vm_net_in }}_{{ vm_name[-3:] }}_1
-    OUT_int: {{ vm_net_out }}_{{ vm_name[-3:] }}_1
+    IN_int: "{{ vm_net_in }}_{{ hostname }}_1"
+    OUT_int: "{{ vm_net_out }}_{{ hostname }}_1"
     OUT_gw: "10.8.8.1"
     IN_gw: "10.7.7.1"
   tasks:
 
     - name: Add iptables rule for NAT public traffic
       command: ip netns exec {{vm_name}} iptables -t nat -I POSTROUTING 1 -o {{ OUT_int }} -j MASQUERADE
-      
-    
 
     - name: Add rule to accept all established connection or is related to an established connection
       command: ip netns exec {{vm_name}} iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT

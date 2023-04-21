@@ -207,9 +207,11 @@ if "Firewall" in tenant_data.keys():
     existing_network_data[tenant_name]["Firewall"]["status"] ={"re_route_to_fw_int_status":"Ready","internal_net_status": "Ready",
                 "external_net_status": "Ready"}
 
+    temp1["ip_address"] = "10.9.9."+ str(namespace.replace("T",""))
     existing_network_data[tenant_name]["Firewall"]["Firewall_master"] = temp1
     existing_network_data[tenant_name]["Firewall"]["Firewall_master"]["status"] = {"firewall_status":"Ready","internal_net_attach_status":"Ready","external_net_attach_status":"Ready","mgmt_net_attach_status":"Ready","fw_control_plane":"Ready","vrrp_status":"Ready"}
 
+    temp2["ip_address"] = "10.9.9."+ str(int(str(namespace.replace("T","")))+ 100)
     existing_network_data[tenant_name]["Firewall"]["Firewall_backup"] = temp2
     existing_network_data[tenant_name]["Firewall"]["Firewall_backup"]["status"] = {"firewall_status":"Ready","internal_net_attach_status":"Ready","external_net_attach_status":"Ready","mgmt_net_attach_status":"Ready","fw_control_plane":"Ready","vrrp_status":"Ready"}
 

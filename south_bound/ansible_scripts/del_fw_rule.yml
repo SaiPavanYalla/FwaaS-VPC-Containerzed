@@ -5,31 +5,31 @@
     log_prefix: "IPTABLES-DROPPED: "
   tasks:
     - name: Del iptables rule for FORWARD chain
-      iptables:
-        chain: FORWARD
-        table: filter
-        source: "{{ src_ip }}"
-        destination: "{{ dest_ip }}"
-        protocol: "{{ protocol }}"
-        source_port: "{{ src_port }}"
-        destination_port: "{{ dest_port }}"
-        limit: "{{ threshold }}/second"
-        jump: "{{policy_action}}"
-        state: absent
-        network_namespace: "{{vm_name}}"
+      command: >
+        ip netns exec {{ vm_name }} iptables
+        -t filter
+        -D FORWARD
+        -s "{{ src_ip }}"
+        -d "{{ dest_ip }}"
+        -p "{{ protocol }}"
+        --sport "{{ src_port }}"
+        --dport "{{ dest_port }}"
+        -m limit --limit "{{ threshold }}/second"
+        -j "{{ policy_action }}"
+      when: protocol != "icmp"
 
     - name: Del iptables rule to log dropped packets
-      iptables:
-        chain: FORWARD
-        table: filter
-        source: "{{ src_ip }}"
-        destination: "{{ dest_ip }}"
-        protocol: "{{ protocol }}"
-        source_port: "{{ src_port }}"
-        destination_port: "{{ dest_port }}"
-        limit: "{{ threshold }}/second"
-        jump: "LOG"
-        log_prefix: "{{ log_prefix }}"
-        log_level: warning
-        state: absent
-        network_namespace: "{{vm_name}}"
+      command: >
+        ip netns exec {{ vm_name }} iptables
+        -t filter
+        -D FORWARD
+        -s "{{ src_ip }}"
+        -d "{{ dest_ip }}"
+        -p "{{ protocol }}"
+        --sport "{{ src_port }}"
+        --dport "{{ dest_port }}"
+        -m limit --limit "{{ threshold }}/second"
+        -j LOG
+        --log-prefix "{{ log_prefix }}"
+        --log-level warning
+      when: protocol != "icmp"

@@ -8,14 +8,7 @@
             "subnet": "192.168.11.0",
             "mask": "255.255.255.0",
             "status": "Completed"
-        },
-        {
-            "network_name": "net2",
-            "subnet": "192.168.12.0",
-            "mask": "255.255.255.0",
-            "status": "Completed"
         }
-
 
        
 
@@ -31,27 +24,15 @@
             "connections": [
                 {
                     "Connected_to": [
-                        "net1",
-                        "net2"
+                        "net1"
+                      
                     ]
                 }
             ]
-        },
-        {
-            "vm_name": "VM2",
-            "vm_vcpus": "2",
-            "vm_ram_mb": "2048",
-            "vm_disk_size": "10",
-            "connections": [
-                {
-                    "Connected_to": [
-                        "net1",
-                        "net2"
-                    ]
-                }
-            ]
-            
         }
+            
+            
+        
     ],
 
 

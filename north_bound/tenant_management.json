@@ -1,48 +1,48 @@
 {
     "T1": {
         "status": "true",
-        "tenant_name": "team10",
-        "tenant_code": "123456"
+        "tenant_name": "",
+        "tenant_code": ""
     },
     "T2": {
-        "status": "false",
+        "status": "true",
         "tenant_name": "",
         "tenant_code": ""
     },
     "T3": {
-        "status": "false",
+        "status": "true",
         "tenant_name": "",
         "tenant_code": ""
     },
     "T4": {
-        "status": "false",
+        "status": "true",
         "tenant_name": "",
         "tenant_code": ""
     },
     "T5": {
-        "status": "false",
+        "status": "true",
         "tenant_name": "",
         "tenant_code": ""
     },
     "T6": {
-        "status": "false",
+        "status": "true",
         "tenant_name": "",
         "tenant_code": ""
     },
     "T7": {
-        "status": "false",
+        "status": "true",
         "tenant_name": "",
         "tenant_code": ""
     },
     "T8": {
-        "status": "false",
-        "tenant_name": "",
-        "tenant_code": ""
+        "status": "true",
+        "tenant_name": "team8",
+        "tenant_code": "123456"
     },
     "T9": {
-        "status": "false",
-        "tenant_name": "",
-        "tenant_code": ""
+        "status": "true",
+        "tenant_name": "team9",
+        "tenant_code": "123456"
     },
     "T10": {
         "status": "false",

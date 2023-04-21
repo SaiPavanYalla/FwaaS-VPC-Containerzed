@@ -1,69 +1,32 @@
 ---
 - name: Configure VRRP
-  hosts: "{{ namespace_tenant }}{{ hostname }}"
+  hosts: localhost
 
   vars:
-
+    src_dir: "/home/csc792/FwaaS-VPC-Containerzed/south_bound/templates"
     virtual_ip: 10.7.7.100
-    vm_net_in: "{{ namespace_tenant }}_FwI_BR"
+    vm_net_in: "{{ namespace_tenant }}_FwI"
     vm_name: "{{ namespace_tenant }}{{ hostname }}"
-    vrrp_interface: {{ vm_net_in }}_{{ vm_name[-3:] }}_1
-    vrrp_loc: "keepalived.conf.j2" 
+    vrrp_interface: "{{ vm_net_in }}_{{ vm_name[-3:] }}_1"
+    vrrp_loc: "{{src_dir}}/keepalived.conf.j2" 
 
   tasks:
-    - name: Create keepalived directory
-      become: true
+    - name: Configure keepalived
+      template:
+        src: "{{src_dir}}/keepalived.conf.j2"
+        dest: "{{src_dir}}/keepalived.conf"
+        mode: "0644"
+      register: template_result
+
+    - name: Copy keepalived
+      command: docker cp {{template_result.dest}} {{vm_name}}:/etc/keepalived/
+
+    - name: Run keepalived service
+      command: docker exec {{vm_name}} service keepalived start
+
+    - name: Remove keepalived file
       file:
-        path: "/etc/keepalived/"
-        state: present
-    
-    - name: Create vrrp conf file
-      become: true
-      file:
-        path: "{{vrrp_loc}}"
-        state: touch
-    
-    - name: Add lines to vrrp conf file
-      lineinfile:
-        path: "{{vrrp_loc}}"
-        line: "{{ item }}"
-      with_items:
-        - "global_defs {"
-        - "   router_id LVS_DEVEL"
-        - "}"
-        - "vrrp_instance VI_1 {"
-        - "    state {{ state }}"
-        - "    interface {{vrrp_interface}}"
-        - "    virtual_router_id {{router_id}}"
-        - "    priority {{vrrp_priority}}"
-        - "    virtual_ipaddress {"
-        - "        {{virtual_ip}}"
-        - "    }"
-        - "    authentication {"
-        - "        auth_type PASS"
-        - "        auth_pass mypassword"
-        - "    }"
-        - "}"
+        path: "{{ template_result.dest }}"
+        state: absent
 
-
-    - name: Configure active standby links
-      become: true
-      vars:
-        interface_name: "{{vrrp_interface}}"
-      block:
-        - name: Install keepalived package
-          apt:
-            name: keepalived
-            state: present
-
-        - name: Configure keepalived
-          template:
-            src: "keepalived.conf.j2"
-            dest: /etc/keepalived/keepalived.conf
-            mode: "0644"
-
-        - name: Start keepalived service
-          service:
-            name: keepalived
-            state: started
 

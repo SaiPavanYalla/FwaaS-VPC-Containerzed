@@ -70,14 +70,14 @@ def execute_firewall_policy(add_firewall_policy):
 
     inventory_path = os.path.join(parent_dir,"south_bound", "inventory.ini")
     playbook_path = os.path.join(parent_dir,"south_bound", "ansible_scripts","add_fw_rule.yml")
-    add_firewall_policy["host"] = network_data[tenant_name]["namespace_tenant"] + "FW"        
-    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path,"--ask-become-pass"]
-    sudo_password = "mmrj2023"
-    
-    for key, value in add_firewall_policy.items():
+
+           
+    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+    sudo_password = "csc792"
+    for key, value in   add_firewall_policy.items():
         command.extend(['-e', f'{key}={value}'])
 
-    add_firewall_policy.pop("host",None)
+    add_firewall_policy.pop("vm_name",None)
 
     status = "Ready"
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -89,7 +89,8 @@ def execute_firewall_policy(add_firewall_policy):
         print(add_firewall_policy)
     else:
         status = "Completed"
-        
+        print(f"Policy is added successfully on the firewall :\n{output}")
+        print(add_firewall_policy)
 
     return status
 
@@ -100,9 +101,9 @@ def delete_firewall_policy(del_firewall_policy):
 
     inventory_path = os.path.join(parent_dir,"south_bound", "inventory.ini")
     playbook_path = os.path.join(parent_dir,"south_bound", "ansible_scripts","del_fw_rule.yml")
-    del_firewall_policy["host"] = network_data[tenant_name]["namespace_tenant"] + "FW"        
-    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path,"--ask-become-pass"]
-    sudo_password = "mmrj2023"
+           
+    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+    sudo_password = "csc792"
 
     for key, value in del_firewall_policy.items():
         command.extend(['-e', f'{key}={value}'])
@@ -119,6 +120,8 @@ def delete_firewall_policy(del_firewall_policy):
         print(del_firewall_policy)
     else:
         status = "Deleted"
+        print(f"Policy is successfully deleted on the firewall :\n{output}")
+        print(del_firewall_policy)
         
 
     return status
@@ -185,6 +188,11 @@ with open('firewallPolicies.csv', 'r') as file:
 
 existing_firewall_policies = []
 
+
+status = "Delete"
+status1 = "Delete"
+status2 = "Delete"
+
 if "Policies" in network_data[tenant_name]["Firewall"].keys():
     existing_firewall_policies =  network_data[tenant_name]["Firewall"]["Policies"]
 
@@ -193,7 +201,21 @@ if "Policies" in network_data[tenant_name]["Firewall"].keys():
 for existing_firewall_policy in existing_firewall_policies:
 
     if existing_firewall_policy["status"] == "Delete":
-        status = delete_firewall_policy(existing_firewall_policy)
+
+        existing_firewall_policy["vm_name"] = network_data[tenant_name]["namespace_tenant"] + "FW1" 
+        status1 = delete_firewall_policy(existing_firewall_policy)
+        existing_firewall_policy.pop("vm_name",None)
+
+        existing_firewall_policy["vm_name"] = network_data[tenant_name]["namespace_tenant"] + "FW2"
+        status2 = delete_firewall_policy(existing_firewall_policy)
+        existing_firewall_policy.pop("vm_name",None)
+
+        if (status1 == "Deleted" and status2 == "Deleted"):
+            status = "Deleted"
+        else:
+            status = "Delete"
+
+
         if status == "Deleted":
             existing_firewall_policies.remove(existing_firewall_policy)
         
@@ -217,7 +239,22 @@ for existing_firewall_policy in existing_firewall_policies:
     if flag_NA:
         
         if existing_firewall_policy["status"] == "Completed":
-            status = delete_firewall_policy(existing_firewall_policy)
+            
+            
+            existing_firewall_policy["vm_name"] = network_data[tenant_name]["namespace_tenant"] + "FW1" 
+            status1 = delete_firewall_policy(existing_firewall_policy)
+            existing_firewall_policy.pop("vm_name",None)
+
+            existing_firewall_policy["vm_name"] = network_data[tenant_name]["namespace_tenant"] + "FW2"
+            status2 = delete_firewall_policy(existing_firewall_policy)
+            existing_firewall_policy.pop("vm_name",None)
+
+            if (status1 == "Deleted" and status2 == "Deleted"):
+                status = "Deleted"
+            else:
+                status = "Delete"
+
+
             if status == "Deleted":
                 existing_firewall_policies.remove(existing_firewall_policy)
             else:
@@ -236,11 +273,26 @@ network_data[tenant_name]["Firewall"]["Policies"] = existing_firewall_policies
 for firewall_policy in firewall_policy_list:
     i=0
     status = "Ready"
+    status1 = "Ready"
+    status2 = "Ready"
     for existing_firewall_policy in existing_firewall_policies:
         
         if are_dicts_equal_except_key(firewall_policy,existing_firewall_policy,"status"):
             if existing_firewall_policy["status"] == "Ready":
-                status = execute_firewall_policy(firewall_policy)
+
+                existing_firewall_policy["vm_name"] = network_data[tenant_name]["namespace_tenant"] + "FW1" 
+                status1 = execute_firewall_policy(existing_firewall_policy)
+                existing_firewall_policy.pop("vm_name",None)
+
+                existing_firewall_policy["vm_name"] = network_data[tenant_name]["namespace_tenant"] + "FW2"
+                status2 = execute_firewall_policy(existing_firewall_policy)
+                existing_firewall_policy.pop("vm_name",None)
+
+                if (status1 == "Completed" and status2 == "Completed"):
+                    status = "Completed"
+                else:
+                    status = "Ready"
+
                 existing_firewall_policies[i]["status"] = status
         i+=1
     
@@ -250,11 +302,21 @@ for firewall_policy in firewall_policy_list:
         if are_dicts_equal_except_key(firewall_policy,existing_firewall_policy,"status"):
             flag_NA = False
     if flag_NA:
-        # print("in here")
-        # print(flag_NA)
-        # print(existing_firewall_policies)
-        # print(firewall_policy)
-        status = execute_firewall_policy(firewall_policy)
+        
+        firewall_policy["vm_name"] = network_data[tenant_name]["namespace_tenant"] + "FW1" 
+        status1 = execute_firewall_policy(firewall_policy)
+        firewall_policy.pop("vm_name",None)
+
+        firewall_policy["vm_name"] = network_data[tenant_name]["namespace_tenant"] + "FW2"
+        status2 = execute_firewall_policy(firewall_policy)
+        firewall_policy.pop("vm_name",None)
+        
+        if (status1 == "Completed" and status2 == "Completed"):
+            status = "Completed"
+        else:
+            status = "Ready"
+
+
         firewall_policy["status"] = status 
         existing_firewall_policies.append(firewall_policy)
         
