@@ -1,0 +1,48 @@
+---
+- name: Delete Docker container and OVS network
+  hosts: localhost
+  become: yes
+  vars:
+    container: "{{ namespace_tenant }}{{ hostname }}"
+	EXt_net: "{{ namespace_tenant }}_FwE_BR"
+	Int_net: "{{ namespace_tenant }}_FwI_BR"
+	mgmt_veth: "mgmt_{{ container }}_0"
+	Ext_veth: "{{ namespace_tenant }}_FwE_{{ hostname }}_0"
+	Int_Veth: "{{ namespace_tenant }}_FwI_{{ hostname }}_0"
+   	
+
+  tasks:
+    - name: Stop and remove Docker container
+      docker_container:
+        name: "{{ container }}"
+        state: stopped
+        remove: yes
+	
+    - name: remove net-namespace
+      command: ip netns del {{ container }}
+      ignore_errors: yes		
+
+    - name: Delete mgmt veth-pair network
+      command: ovs-vsctl del-port mgmt {{ mgmt_veth }}
+      ignore_errors: yes
+	
+    - name: Delete mgmt veth pair
+      command: ip link delete {{ mgmt_veth }}
+      ignore_errors: yes
+	  
+	- name: Delete External veth-pair network
+      command: ovs-vsctl del-port {{ EXt_net }} {{ mgmt_veth }}
+      ignore_errors: yes
+	
+    - name: Delete External veth pair
+      command: ip link delete {{ mgmt_veth }}
+      ignore_errors: yes
+
+    - name: Delete Internal veth-pair network
+      command: ovs-vsctl del-port {{ Int_net }} {{ mgmt_veth }}
+      ignore_errors: yes
+	
+    - name: Delete Internal veth pair
+      command: ip link delete {{ mgmt_veth }}
+      ignore_errors: yes
+
