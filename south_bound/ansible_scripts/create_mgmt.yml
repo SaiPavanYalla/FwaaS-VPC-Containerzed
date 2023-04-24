@@ -55,22 +55,3 @@
       command: "dnsmasq -C /etc/{{ vm_net }}_fwaas.conf"
     
     
-
-    - name: Add lines to file
-      lineinfile:
-        path: "{{ src_dir_FW }}/inventory.ini"
-        line: "{{ item }}"
-      with_items:
-        - "[FW]"
-        - "{{ hosts}}"
-        - "[FW:vars]"
-        - "ansible_user=mmrj"
-        - "ansible_password=mmrj"
-        - "host_key_checking=False"
-        - "ansible_ssh_common_args = -o StrictHostKeyChecking=no"
-
-      vars:
-        hosts: |
-          {% for i in range(1, 254) %}
-          T{{ i }}FW ansible_host=10.9.9.{{ i }}
-          {% endfor %}

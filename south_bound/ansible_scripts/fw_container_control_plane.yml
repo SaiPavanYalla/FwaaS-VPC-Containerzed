@@ -38,5 +38,3 @@
     - name: Add route for the internal 192.168.0.0/16 network
       command: ip netns exec {{vm_name}} ip route add 192.168.0.0/16 via {{ IN_gw }} dev {{ IN_int }}
       
-    - name: Add default route towards external interface
-      command: ip netns exec {{vm_name}} ip route add default via {{ OUT_gw }} dev {{ OUT_int }}

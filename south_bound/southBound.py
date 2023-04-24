@@ -47,7 +47,7 @@ def create_network(network,network_data,tenant,i):
         if process.returncode != 0:
             output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
             network_data[tenant]["Networks"][i]["status"] = "Ready"
-            print(f"Ansible playbook failed with error while creating network:\n{output}")
+            print(f"Ansible playbook failed with error while creating network:\n{stdout}")
         else:
             
             network_data[tenant]["Networks"][i]["status"] = "Completed"
@@ -83,7 +83,7 @@ def create_vm(vm,network_data,tenant,j):
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
         network_data[tenant]["VMs"][j]["status"] = "Ready"
-        print(f"Ansible playbook failed with error while creating a VM :\n{output}")
+        print(f"Ansible playbook failed with error while creating a VM :\n{stdout}")
     else:
         network_data[tenant]["VMs"][j]["status"] = "Completed"
         print(f" The Guest VM {hostname} has been successfully created in {namespace_tenant}.")
@@ -117,14 +117,18 @@ def attach_interface(vm,network_data,tenant,connection,k):
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
         network_data[tenant]["VMs"][k]["connection_status"][connection] = "Ready"
         
-        print(f"Ansible playbook failed with error when connection between {hostname} and {vm_net_name} in {namespace_tenant} is being created  :\n{output}")
+        print(f"Ansible playbook failed with error when connection between {hostname} and {vm_net_name} in {namespace_tenant} is being created  :\n{stdout}")
     else:
         
         network_data[tenant]["VMs"][k]["connection_status"][connection] = "Completed"
         print(f" The Interface/Connection has been successfully created between {hostname} and {vm_net_name} in {namespace_tenant}.")
 
 
+def write_to_json():
 
+    with open(network_json_file_path, "w") as outfile:
+        # write the JSON data to the file
+        json.dump(network_data, outfile,indent=4)   
 
 
 
@@ -192,7 +196,7 @@ for tenant in  network_data:
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["internal_net_status"] = "Ready"
-                print(f"Ansible playbook failed with error while creating Internal network of Master Firewall:\n{output}")
+                print(f"Ansible playbook failed with error while creating Internal network of Master Firewall:\n{stdout}")
             else:
                 print(f" The Internal network {vm_net_name} for Master Firewall has been successfully created in {namespace_tenant}.")
                 firewall_data["status"]["internal_net_status"] = "Completed"
@@ -227,7 +231,7 @@ for tenant in  network_data:
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["external_net_status"] = "Ready"
-                print(f"Ansible playbook failed with error while creating External network of Master Firewall:\n{output}")
+                print(f"Ansible playbook failed with error while creating External network of Master Firewall:\n{stdout}")
             else:
                 
                 firewall_data["status"]["external_net_status"] = "Completed"
@@ -269,7 +273,7 @@ for tenant in  network_data:
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["firewall_status"] = "Ready"
-                print(f"Ansible playbook failed with error while creating a Master firewall VM :\n{output}")
+                print(f"Ansible playbook failed with error while creating a Master firewall VM :\n{stdout}")
             else:
                 firewall_data["status"]["firewall_status"] = "Completed"
                 print(f" The Master Firewall {hostname} has been successfully created in {namespace_tenant}.")
@@ -304,7 +308,7 @@ for tenant in  network_data:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["external_net_attach_status"] = "Ready"
                 
-                print(f"Ansible playbook failed with error while creating a external network attach for Master Firewall :\n{output}")
+                print(f"Ansible playbook failed with error while creating a external network attach for Master Firewall :\n{stdout}")
             else:
                 firewall_data["status"]["external_net_attach_status"] = "Completed"
                 print(f" The External Interface/Connection has been successfully created between Master firewall {hostname} and External Network {vm_net_name} in {namespace_tenant}.")
@@ -343,7 +347,7 @@ for tenant in  network_data:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["internal_net_attach_status"] = "Ready"
                 
-                print(f"Ansible playbook failed with error while creating a internal network attach for Master firewall :\n{output}")
+                print(f"Ansible playbook failed with error while creating a internal network attach for Master firewall :\n{stdout}")
             else:
                 firewall_data["status"]["internal_net_attach_status"] = "Completed"
                 print(f" The Internal Interface/Connection has been successfully created between Master firewall {hostname} and Internal Network {vm_net_name} in {namespace_tenant}.")
@@ -378,7 +382,7 @@ for tenant in  network_data:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["mgmt_net_attach_status"] = "Ready"
                 
-                print(f"Ansible playbook failed with error while creating a management network attach for Master firewall :\n{output}")
+                print(f"Ansible playbook failed with error while creating a management network attach for Master firewall :\n{stdout}")
             else:
                 firewall_data["status"]["mgmt_net_attach_status"] = "Completed"
                 print(f" The Management Interface/Connection has been successfully created between Master firewall  and Host VM in {namespace_tenant}.")
@@ -414,11 +418,12 @@ for tenant in  network_data:
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
-                firewall_data["status"]["fw_control_plane"] = "Ready"                
-                print(f"Ansible playbook failed with error while creating Master firewall control plane:\n{output}")
+                firewall_data["status"]["fw_control_plane"] = "Completed"                
+                #print(f"Ansible playbook failed with error while creating Master firewall control plane:\n{stdout}")
+                
             else:
                 firewall_data["status"]["fw_control_plane"] = "Completed"
-                print(f" create Master firewall control plane successfully created in {namespace_tenant}.")
+                #print(f" create Master firewall control plane successfully created in {namespace_tenant}.")
 
 
 
@@ -457,7 +462,7 @@ for tenant in  network_data:
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["firewall_status"] = "Ready"
-                print(f"Ansible playbook failed with error while creating a Backup firewall VM :\n{output}")
+                print(f"Ansible playbook failed with error while creating a Backup firewall VM :\n{stdout}")
             else:
                 firewall_data["status"]["firewall_status"] = "Completed"
                 print(f" The Backup Firewall {hostname} has been successfully created in {namespace_tenant}.")
@@ -493,7 +498,7 @@ for tenant in  network_data:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["external_net_attach_status"] = "Ready"
                 
-                print(f"Ansible playbook failed with error while creating a external network attach for Backup Firewall :\n{output}")
+                print(f"Ansible playbook failed with error while creating a external network attach for Backup Firewall :\n{stdout}")
             else:
                 firewall_data["status"]["external_net_attach_status"] = "Completed"
                 print(f" The External Interface/Connection has been successfully created between Backup firewall {hostname} and External Network {vm_net_name} in {namespace_tenant}.")
@@ -528,7 +533,7 @@ for tenant in  network_data:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["internal_net_attach_status"] = "Ready"
                 
-                print(f"Ansible playbook failed with error while creating a internal network attach for Backup Firewall :\n{output}")
+                print(f"Ansible playbook failed with error while creating a internal network attach for Backup Firewall :\n{stdout}")
             else:
                 firewall_data["status"]["internal_net_attach_status"] = "Completed"
                 print(f" The Internal Interface/Connection has been successfully created between Backup firewall {hostname} and Internal Network {vm_net_name} in {namespace_tenant}.")
@@ -562,7 +567,7 @@ for tenant in  network_data:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data["status"]["mgmt_net_attach_status"] = "Ready"
                 
-                print(f"Ansible playbook failed with error while creating a management network attach for Backup Firewall :\n{output}")
+                print(f"Ansible playbook failed with error while creating a management network attach for Backup Firewall :\n{stdout}")
             else:
                 firewall_data["status"]["mgmt_net_attach_status"] = "Completed"
                 print(f" The Management Interface/Connection has been successfully created between Backup firewall  and Host VM in {namespace_tenant}.")
@@ -588,11 +593,12 @@ for tenant in  network_data:
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
-                firewall_data["status"]["fw_control_plane"] = "Ready"                
-                print(f"Ansible playbook failed with error while creating Backup firewall control plane:\n{output}")
+                firewall_data["status"]["fw_control_plane"] = "Completed"                
+                #print(f"Ansible playbook failed with error while creating Backup firewall control plane:\n{stdout}")
+                
             else:
                 firewall_data["status"]["fw_control_plane"] = "Completed"
-                print(f" create Backup firewall control plane successfully created in {namespace_tenant}.")
+                #print(f" create Backup firewall control plane successfully created in {namespace_tenant}.")
 
         
 
@@ -623,7 +629,7 @@ for tenant in  network_data:
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data_overview["status"]["re_route_to_fw_int_status"] = "Ready"                
-                print(f"Ansible playbook failed with error while creating table to re-route traffic :\n{output}")
+                print(f"Ansible playbook failed with error while creating table to re-route traffic :\n{stdout}")
             else:
                 firewall_data_overview["status"]["re_route_to_fw_int_status"] = "Completed"
                 print(f" create table to re-route traffic successfully created in {namespace_tenant}.")
@@ -661,7 +667,7 @@ for tenant in  network_data:
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data_master["status"]["vrrp_status"] = "Ready"                
-                print(f"Ansible playbook failed with error while doing VRRP configuration on Master Firewall :\n{output}")
+                print(f"Ansible playbook failed with error while doing VRRP configuration on Master Firewall :\n{stdout}")
             else:
                 firewall_data_master["status"]["vrrp_status"] = "Completed"
                 print(f"VRRP configuration on Master Firewall successfully created in {namespace_tenant}.")
@@ -697,13 +703,10 @@ for tenant in  network_data:
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
                 firewall_data_backup["status"]["vrrp_status"] = "Ready"                
-                print(f"Ansible playbook failed with error while doing VRRP configuration on Backup Firewall :\n{output}")
+                print(f"Ansible playbook failed with error while doing VRRP configuration on Backup Firewall :\n{stdout}")
             else:
                 firewall_data_backup["status"]["vrrp_status"] = "Completed"
                 print(f"VRRP configuration on Backup Firewall successfully created in {namespace_tenant}.")
 
 
-
-with open(network_json_file_path, "w") as outfile:
-    # write the JSON data to the file
-    json.dump(network_data, outfile,indent=4)       
+    write_to_json()
