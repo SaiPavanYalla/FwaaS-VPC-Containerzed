@@ -9,14 +9,18 @@
     mgmt_veth: "mgmt_{{ container }}_0"
     Ext_veth: "{{ namespace_tenant }}_FwE_{{ hostname }}_0"
     Int_Veth: "{{ namespace_tenant }}_FwI_{{ hostname }}_0"
-   	
+
 
   tasks:
-    - name: Stop and remove Docker container
-      docker_container:
-        name: "{{ container }}"
-        state: stopped
-        remove: yes
+    
+    
+    - name: Stop container
+      command: docker container stop {{container}}
+      ignore_errors: yes
+
+    - name: Delete Container
+      command: docker container rm {{container}}
+      ignore_errors: yes
         
     - name: remove net-namespace
       command: ip netns del {{ container }}
@@ -35,7 +39,7 @@
       ignore_errors: yes
 
     - name: Delete External veth pair
-      command: ip link delete {{ mgmt_veth }}
+      command: ip link delete {{ Ext_veth }}
       ignore_errors: yes
 
     - name: Delete Internal veth-pair network
@@ -43,6 +47,6 @@
       ignore_errors: yes
 
     - name: Delete Internal veth pair
-      command: ip link delete {{ mgmt_veth }}
+      command: ip link delete {{ Int_Veth }}
       ignore_errors: yes
 

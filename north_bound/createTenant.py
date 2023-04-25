@@ -84,7 +84,7 @@ stdout, stderr = process.communicate(sudo_password.encode())
 
 if process.returncode != 0:
     output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')    
-    print(f"Tenant creation failed with error:\n{output}")
+    print(f"Tenant creation failed with error:\n{stdout}")
 else:
     print(f"Tenant creation successfull for "+ tenant_name)
 

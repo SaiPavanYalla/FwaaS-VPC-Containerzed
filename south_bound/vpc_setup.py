@@ -24,7 +24,7 @@ stdout, stderr = process.communicate(sudo_password.encode())
 
 if process.returncode != 0:
     output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')   
-    print(f"Public Gateway creation failed with error:\n{output}")
+    print(f"Public Gateway creation failed with error:\n{stdout}")
 else:
     print(f"Public Gateway creation successfull")
 
@@ -55,7 +55,7 @@ if process.returncode != 0:
     output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
     
     
-    print(f"Failed with error while creating a management network :\n{output}")
+    print(f"Failed with error while creating a management network :\n{stdout}")
 else:
     print(f"successfull while creating a management network")
 

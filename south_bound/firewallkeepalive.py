@@ -60,7 +60,7 @@ def delete_container(hostname,namespace_tenant):
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
         status = "Delete"
-        #print(f"Ansible playbook failed with error while deleting a Firewall:\n{output}")
+        print(f"Ansible playbook failed with error while deleting a Firewall:\n{stdout},{output}")
     else:
         
         status = "Deleted"
@@ -74,7 +74,9 @@ def delete_container(hostname,namespace_tenant):
 
 
 for tenant in  network_data:
-
+    status_backup  =""
+    status_master = ""
+    namespace_tenant = network_data[tenant]["namespace_tenant"]
     if  "Firewall" in network_data[tenant].keys():
         firewall_data = network_data[tenant]["Firewall"]
         status_master = "Delete"
@@ -82,9 +84,9 @@ for tenant in  network_data:
             if firewall_data["Firewall_master"]["status"]["firewall_status"] == "Completed":
                 ip=firewall_data["Firewall_master"]["ip_address"]
                 if(not reachibility_check(ip)):
-                    status_master = delete_container("FW1",tenant)
+                    status_master = delete_container("FW1",namespace_tenant)
                     if status_master == "Deleted":
-
+                        
                         firewall_data["Firewall_master"]["status"]["firewall_status"] = "Ready"
                         firewall_data["Firewall_master"]["status"]["internal_net_attach_status"] = "Ready"
                         firewall_data["Firewall_master"]["status"]["external_net_attach_status"] = "Ready"
@@ -99,7 +101,7 @@ for tenant in  network_data:
             if firewall_data["Firewall_backup"]["status"]["firewall_status"] == "Completed":
                 ip=firewall_data["Firewall_backup"]["ip_address"]
                 if( not reachibility_check(ip)):
-                    status_backup = delete_container("FW1",tenant)
+                    status_backup = delete_container("FW2",namespace_tenant)
                     if status_backup == "Deleted":
 
                         firewall_data["Firewall_backup"]["status"]["firewall_status"] = "Ready"
@@ -110,8 +112,8 @@ for tenant in  network_data:
                         firewall_data["Firewall_backup"]["status"]["vrrp_status"] = "Ready"
         
         if status_backup == "Deleted" or status_master == "Deleted":
-            if "Policies" in in firewall_data.keys():
-                for policy in firewall_data["Policies"].items():
+            if "Policies" in firewall_data.keys():
+                for policy in firewall_data["Policies"]:
                     policy["status"] = "Ready"
 
 

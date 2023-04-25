@@ -85,11 +85,11 @@ def execute_firewall_policy(add_firewall_policy):
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
         status = "Ready"
-        print(f"Ansible playbook failed with error while adding a Policy :\n{output}")
+        print(f"Ansible playbook failed with error while adding a Policy :\n{stdout}")
         print(add_firewall_policy)
     else:
         status = "Completed"
-        print(f"Policy is added successfully on the firewall :\n{output}")
+        print(f"Policy is added successfully on the firewall :\n")
         print(add_firewall_policy)
 
     return status
@@ -116,11 +116,11 @@ def delete_firewall_policy(del_firewall_policy):
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
         status = "Delete"
-        print(f"Ansible playbook failed with error while deleting a Policy :\n{output}")
+        print(f"Ansible playbook failed with error while deleting a Policy :\n{stdout}")
         print(del_firewall_policy)
     else:
         status = "Deleted"
-        print(f"Policy is successfully deleted on the firewall :\n{output}")
+        print(f"Policy is successfully deleted on the firewall :\n")
         print(del_firewall_policy)
         
 

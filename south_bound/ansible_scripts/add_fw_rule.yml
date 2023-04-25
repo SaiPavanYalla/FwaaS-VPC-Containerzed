@@ -88,5 +88,5 @@
         -I FORWARD 3
       when: protocol == "icmp"
 
-   - name: Add rule to accept all established connection or is RELATED to an established connection
+    - name: Add rule to accept all established connection or is RELATED to an established connection
       command: ip netns exec {{vm_name}} iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT

@@ -1,5 +1,5 @@
 {
-    "tenant_name": "team12",
+    "tenant_name": "team36",
     "tenant_code": "123456",
 
     "Networks" : [
@@ -9,10 +9,6 @@
             "mask": "255.255.255.0",
             "status": "Completed"
         }
-
-
-       
-
         ],
     
     "VMs": [
@@ -45,8 +41,6 @@
             
         }
     ],
-
-
     "Firewall":{
                 "firewall_vcpus": "2",
                 "firewall_ram_mb": "2048",
