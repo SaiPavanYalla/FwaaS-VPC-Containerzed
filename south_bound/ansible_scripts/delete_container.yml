@@ -35,7 +35,7 @@
       ignore_errors: yes
 
     - name: Delete External veth-pair network
-      command: ovs-vsctl del-port {{ EXt_net }} {{ mgmt_veth }}
+      command: ovs-vsctl del-port {{ EXt_net }} {{ Ext_veth }}
       ignore_errors: yes
 
     - name: Delete External veth pair
@@ -43,7 +43,7 @@
       ignore_errors: yes
 
     - name: Delete Internal veth-pair network
-      command: ovs-vsctl del-port {{ Int_net }} {{ mgmt_veth }}
+      command: ovs-vsctl del-port {{ Int_net }} {{ Int_Veth }}
       ignore_errors: yes
 
     - name: Delete Internal veth pair
