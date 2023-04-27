@@ -44,6 +44,10 @@ for key, value in tenant_management_data.items():
         if value["tenant_name"] == tenant_name:
             flag_if_present = True
             namespace = key
+
+            if not (value["tenant_code"] == tenant_code):
+                print("Tenant code is not valid.Please enter a valid tenant code")
+                exit() 
             
 
 
