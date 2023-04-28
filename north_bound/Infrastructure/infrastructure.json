@@ -59,12 +59,12 @@
                 "firewall_disk_size": "10",
                 "ip_address": "10.9.9.1",
                 "status": {
-                    "firewall_status": "Ready",
-                    "internal_net_attach_status": "Ready",
-                    "external_net_attach_status": "Ready",
-                    "mgmt_net_attach_status": "Ready",
-                    "fw_control_plane": "Ready",
-                    "vrrp_status": "Ready"
+                    "firewall_status": "Completed",
+                    "internal_net_attach_status": "Completed",
+                    "external_net_attach_status": "Completed",
+                    "mgmt_net_attach_status": "Completed",
+                    "fw_control_plane": "Completed",
+                    "vrrp_status": "Completed"
                 }
             },
             "Firewall_backup": {
@@ -90,7 +90,7 @@
                     "protocol": "icmp",
                     "policy_action": "ACCEPT",
                     "threshold": "2",
-                    "status": "Ready"
+                    "status": "Completed"
                 }
             ]
         }

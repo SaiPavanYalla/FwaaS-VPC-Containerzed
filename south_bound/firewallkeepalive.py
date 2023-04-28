@@ -3,6 +3,11 @@ import json
 import ipaddress
 import subprocess
 import time
+from datetime import datetime
+
+current_time = datetime.now()
+
+
 
 # get the current working directory
 cwd = os.getcwd()
@@ -44,10 +49,10 @@ def reachibility_check(ip_address):
 def delete_container(hostname,namespace_tenant):
     inventory_path = os.path.join(cwd, "inventory.ini")
     playbook_path = os.path.join(cwd, "ansible_scripts","delete_container.yml")
-    
-    extra_vars = {'namespace_tenant': namespace_tenant , 'hostname': hostname  }
-    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
     sudo_password = "csc792"
+    extra_vars = {'namespace_tenant': namespace_tenant , 'hostname': hostname   }
+    command = ['sudo','-S', 'ansible-playbook', playbook_path ,'-i', inventory_path]
+    
 
     for key, value in extra_vars.items():
         command.extend(['-e', f'{key}={value}'])
@@ -55,7 +60,7 @@ def delete_container(hostname,namespace_tenant):
     status = "Delete"
     
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate(sudo_password.encode())
+    stdout, stderr = process.communicate(sudo_password.encode() + b'\n')
 
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -121,3 +126,7 @@ for tenant in  network_data:
 with open(network_json_file_path, "w") as outfile:
     # write the JSON data to the file
     json.dump(network_data, outfile,indent=4)    
+
+
+print(f"The Firewallkeepalive has run successfully at {current_time}")
+

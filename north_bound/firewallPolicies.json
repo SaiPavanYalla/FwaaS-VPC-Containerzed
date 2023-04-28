@@ -1,0 +1,26 @@
+{
+
+    "tenant_name": "team36" ,
+    "tenant_code": "123456" ,    
+    "Policies" : [
+        
+        {
+            
+                "src_ip": "192.168.11.0/24",
+                "src_port": "any",
+                "dest_ip": "8.8.8.8/32",
+                "dest_port": "any",
+                "protocol": "icmp",
+                "policy_action": "ACCEPT",
+                "threshold": "2"
+            
+            
+        }
+
+
+
+        ]
+    
+ 
+
+}

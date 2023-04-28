@@ -3,6 +3,12 @@ import json
 import ipaddress
 import subprocess
 
+from datetime import datetime
+
+current_time = datetime.now()
+
+
+
 # get the current working directory
 cwd = os.getcwd()
 
@@ -33,7 +39,7 @@ def create_network(network,network_data,tenant,i):
         tenant_net_gw_ip = str(ovs_network_address.network_address + 1) + str(cidr_notation)
         src_dir = os.path.join(cwd , "templates")
         extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip ,'src_dir': src_dir}
-        command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+        command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
         sudo_password = "csc792"
 
         for key, value in extra_vars.items():
@@ -42,7 +48,7 @@ def create_network(network,network_data,tenant,i):
         
         network_data[tenant]["Networks"][i]["status"] = "Running"
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-        stdout, stderr = process.communicate(sudo_password.encode())
+        stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
         if process.returncode != 0:
             output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -67,7 +73,7 @@ def create_vm(vm,network_data,tenant,j):
 
     extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant }
 
-    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+    command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
     sudo_password = "csc792"
 
     for key, value in extra_vars.items():
@@ -78,7 +84,7 @@ def create_vm(vm,network_data,tenant,j):
     
     network_data[tenant]["VMs"][j]["status"] = "Running"
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate(sudo_password.encode())
+    stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -100,7 +106,7 @@ def attach_interface(vm,network_data,tenant,connection,k):
     #src_dir= os.path.join(cwd , "templates")
     extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
-    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+    command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
     sudo_password = "csc792"
 
     for key, value in extra_vars.items():
@@ -111,7 +117,7 @@ def attach_interface(vm,network_data,tenant,connection,k):
     
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate(sudo_password.encode())
+    stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -178,11 +184,11 @@ for tenant in  network_data:
             namespace_tenant = network_data[tenant]["namespace_tenant"]
             vm_net_name = "FwI" 
             dhcp_start = ovs_network_address.network_address + 2
-            dhcp_end = ovs_network_address.network_address + 3
+            dhcp_end = ovs_network_address.network_address + 90
             tenant_net_gw_ip = str(ovs_network_address.network_address + 1) + str(cidr_notation)
             src_dir= os.path.join(cwd , "templates")
             extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip ,'src_dir':src_dir}
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -191,7 +197,7 @@ for tenant in  network_data:
             
             firewall_data["status"]["internal_net_status"] = "Running"
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -213,11 +219,11 @@ for tenant in  network_data:
             namespace_tenant = network_data[tenant]["namespace_tenant"]
             vm_net_name = "FwE"
             dhcp_start = ovs_network_address.network_address + 2
-            dhcp_end = ovs_network_address.network_address + 3
+            dhcp_end = ovs_network_address.network_address + 90
             tenant_net_gw_ip = str(ovs_network_address.network_address + 1) + str(cidr_notation)
             src_dir= os.path.join(cwd , "templates")
             extra_vars = {'namespace_tenant': namespace_tenant  , 'vm_net_name': vm_net_name ,'dhcp_start': dhcp_start ,'dhcp_end': dhcp_end ,'tenant_net_gw_ip': tenant_net_gw_ip,'src_dir':src_dir }
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -226,7 +232,7 @@ for tenant in  network_data:
             
             firewall_data["status"]["external_net_status"] = "Running"
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -257,7 +263,7 @@ for tenant in  network_data:
 
             extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -268,7 +274,7 @@ for tenant in  network_data:
             
             firewall_data["status"]["firewall_status"] = "Running"
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -291,7 +297,7 @@ for tenant in  network_data:
             #src_dir= os.path.join(cwd , "templates")
             extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -302,7 +308,7 @@ for tenant in  network_data:
             
 
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -330,7 +336,7 @@ for tenant in  network_data:
             #src_dir= os.path.join(cwd , "templates")
             extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -341,7 +347,7 @@ for tenant in  network_data:
             
 
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -365,7 +371,7 @@ for tenant in  network_data:
             src_dir= os.path.join(cwd , "templates")
             extra_vars = { 'vm_name': vm_name, 'last_mac': last_mac  }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -376,7 +382,7 @@ for tenant in  network_data:
             
 
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -406,7 +412,7 @@ for tenant in  network_data:
 
             extra_vars = {'hostname': hostname ,'namespace_tenant' : namespace_tenant  }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -414,7 +420,7 @@ for tenant in  network_data:
             
             firewall_data["status"]["fw_control_plane"] = "Running"  
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -446,7 +452,7 @@ for tenant in  network_data:
 
             extra_vars = {'hostname': hostname,'namespace_tenant' : namespace_tenant}
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -457,7 +463,7 @@ for tenant in  network_data:
             
             firewall_data["status"]["firewall_status"] = "Running"
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -481,7 +487,7 @@ for tenant in  network_data:
             # src_dir= os.path.join(cwd , "templates")
             extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -492,7 +498,7 @@ for tenant in  network_data:
             
 
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -516,7 +522,7 @@ for tenant in  network_data:
             #src_dir= os.path.join(cwd , "templates")
             extra_vars = {'hostname': hostname  , 'namespace_tenant': namespace_tenant ,'vm_net_name': vm_net_name }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -527,7 +533,7 @@ for tenant in  network_data:
             
 
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -550,7 +556,7 @@ for tenant in  network_data:
             #src_dir= os.path.join(cwd , "templates")
             extra_vars = { 'vm_name': vm_name, 'last_mac': last_mac }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -561,7 +567,7 @@ for tenant in  network_data:
             
 
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -581,7 +587,7 @@ for tenant in  network_data:
 
             extra_vars = {'hostname': hostname ,'namespace_tenant' : namespace_tenant  }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -589,7 +595,7 @@ for tenant in  network_data:
             
             firewall_data["status"]["fw_control_plane"] = "Running"  
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -616,7 +622,7 @@ for tenant in  network_data:
 
             extra_vars = {'namespace_tenant': namespace_tenant   }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -624,7 +630,7 @@ for tenant in  network_data:
             
             firewall_data_overview["status"]["re_route_to_fw_int_status"] = "Running"  
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -654,7 +660,7 @@ for tenant in  network_data:
               }
             
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -662,7 +668,7 @@ for tenant in  network_data:
             
             firewall_data_master["status"]["vrrp_status"] = "Running"  
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -690,7 +696,7 @@ for tenant in  network_data:
              'vrrp_priority': vrrp_priority,
             'state': state   }
 
-            command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+            command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
             sudo_password = "csc792"
 
             for key, value in extra_vars.items():
@@ -698,7 +704,7 @@ for tenant in  network_data:
             
             firewall_data_backup["status"]["vrrp_status"] = "Running"  
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = process.communicate(sudo_password.encode())
+            stdout, stderr =process.communicate(sudo_password.encode() + b'\n')
 
             if process.returncode != 0:
                 output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
@@ -710,3 +716,5 @@ for tenant in  network_data:
 
 
     write_to_json()
+
+print(f"The SouthBound has run successfully at {current_time}")

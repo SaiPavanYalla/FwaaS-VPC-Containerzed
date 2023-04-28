@@ -3,7 +3,16 @@ import ipaddress
 import os 
 import json
 import subprocess
+from datetime import datetime
 
+current_time = datetime.now()
+
+
+# get the current working directory
+cwd = os.getcwd()
+
+# Navigate to the parent directory of south_bound
+parent_dir = os.path.dirname(cwd)
 
 def is_valid_ipv4_address(address):
     try:
@@ -43,8 +52,20 @@ firewall_policy_list = []
 #tenant_name =  "team66"
 #tenant_code = "123456"
 
-tenant_name = input("Please enter your Tenant Name: ") 
-tenant_code = input("Please enter your Tenant Code: ") 
+firewall_json_file_path  = os.path.join(parent_dir, "north_bound", "firewallPolicies.json")
+
+
+
+firewall_policy_list_with_key ={}
+
+with open(firewall_json_file_path, 'r') as f:
+    firewall_policy_list_with_key = json.load(f)
+
+
+tenant_name = firewall_policy_list_with_key["tenant_name"] 
+tenant_code = firewall_policy_list_with_key["tenant_code"]  
+
+
 
 
 network_data = {}
@@ -72,16 +93,18 @@ def execute_firewall_policy(add_firewall_policy):
     playbook_path = os.path.join(parent_dir,"south_bound", "ansible_scripts","add_fw_rule.yml")
 
            
-    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+    command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
     sudo_password = "csc792"
     for key, value in   add_firewall_policy.items():
         command.extend(['-e', f'{key}={value}'])
 
     add_firewall_policy.pop("vm_name",None)
 
+    
+
     status = "Ready"
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate(sudo_password.encode())
+    stdout, stderr = process.communicate(sudo_password.encode() + b'\n')
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
         status = "Ready"
@@ -102,7 +125,7 @@ def delete_firewall_policy(del_firewall_policy):
     inventory_path = os.path.join(parent_dir,"south_bound", "inventory.ini")
     playbook_path = os.path.join(parent_dir,"south_bound", "ansible_scripts","del_fw_rule.yml")
            
-    command = ['sudo','ansible-playbook', playbook_path ,'-i', inventory_path]
+    command = ['sudo','-S','ansible-playbook', playbook_path ,'-i', inventory_path]
     sudo_password = "csc792"
 
     for key, value in del_firewall_policy.items():
@@ -112,7 +135,7 @@ def delete_firewall_policy(del_firewall_policy):
 
     status = "Deleted"
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate(sudo_password.encode())
+    stdout, stderr = process.communicate(sudo_password.encode() + b'\n')
     if process.returncode != 0:
         output = stderr.decode('utf-8') if stderr else stdout.decode('utf-8')
         status = "Delete"
@@ -135,55 +158,58 @@ def delete_firewall_policy(del_firewall_policy):
 #making firewall policy list and taking all that into a dictionary
 firewall_policy_list = []
 
-with open('firewallPolicies.csv', 'r') as file:
-    reader = csv.DictReader(file)
-    for firewall_policy_obj in reader:
-        if not (is_valid_ipv4_address(firewall_policy_obj["src_ip"]) and is_valid_ipv4_address(firewall_policy_obj["dest_ip"])):
-            print("The IP addresses given are not valid in the row below")
-           
-            print(firewall_policy_obj)
-            exit()
 
+
+firewall_policy_list = firewall_policy_list_with_key["Policies"]
+
+
+for firewall_policy_obj in firewall_policy_list:
+    if not (is_valid_ipv4_address(firewall_policy_obj["src_ip"]) and is_valid_ipv4_address(firewall_policy_obj["dest_ip"])):
+        print("The IP addresses given are not valid in the row below")
         
+        print(firewall_policy_obj)
+        exit()
 
-        if firewall_policy_obj["policy_action"] == "ACCEPT":
-            if not ( int(firewall_policy_obj["threshold"]) > 1 ):
-                print("The threshold should be greater than one for the policy action as ACCEPT for this below row")
-                print(firewall_policy_obj)
-                exit()
-
-        elif firewall_policy_obj["policy_action"] == "DROP" :
-            if not ( int(firewall_policy_obj["threshold"]) == 0 ):
-                print("The threshold should be equal to zero for the policy action as DROP for this below row")
-                print(firewall_policy_obj)
-                exit()
-
-        if firewall_policy_obj["protocol"] == "icmp" :
-            if not (str(firewall_policy_obj["src_port"])=="any" and str(firewall_policy_obj["dest_port"])=="any"):
-                print("The Source Port and Destination Port should be 'any' for protocol as icmp for this below row ")
-                print(firewall_policy_obj)
-                exit()
-            
-        else:
-            if not (is_valid_port(firewall_policy_obj["src_port"]) and is_valid_port(firewall_policy_obj["dest_port"]) ):
-                print("The Port Numbers given are not valid in the row below")
-                print(firewall_policy_obj)
-                exit()
-
-        
-        if firewall_policy_obj["src_port"] == "any":
-            firewall_policy_obj["src_port"] = "0:65535"
-
-        if firewall_policy_obj["dest_port"] == "any":
-            firewall_policy_obj["dest_port"] = "0:65535"
-
-
-        if not (firewall_policy_obj["policy_action"] == "ACCEPT" or firewall_policy_obj["policy_action"] == "DROP" ):
-            print("The Policy action is not valid it should be ACCEPT or DROP")
-            print(firewall_policy_obj)
-            exit()
     
-        firewall_policy_list.append(firewall_policy_obj)
+
+    if firewall_policy_obj["policy_action"] == "ACCEPT":
+        if not ( int(firewall_policy_obj["threshold"]) > 1 ):
+            print("The threshold should be greater than one for the policy action as ACCEPT for this below row")
+            print(firewall_policy_obj)
+            exit()
+
+    elif firewall_policy_obj["policy_action"] == "DROP" :
+        if not ( int(firewall_policy_obj["threshold"]) == 0 ):
+            print("The threshold should be equal to zero for the policy action as DROP for this below row")
+            print(firewall_policy_obj)
+            exit()
+
+    if firewall_policy_obj["protocol"] == "icmp" :
+        if not (str(firewall_policy_obj["src_port"])=="any" and str(firewall_policy_obj["dest_port"])=="any"):
+            print("The Source Port and Destination Port should be 'any' for protocol as icmp for this below row ")
+            print(firewall_policy_obj)
+            exit()
+        
+    else:
+        if not (is_valid_port(firewall_policy_obj["src_port"]) and is_valid_port(firewall_policy_obj["dest_port"]) ):
+            print("The Port Numbers given are not valid in the row below")
+            print(firewall_policy_obj)
+            exit()
+
+    
+    if firewall_policy_obj["src_port"] == "any":
+        firewall_policy_obj["src_port"] = "0:65535"
+
+    if firewall_policy_obj["dest_port"] == "any":
+        firewall_policy_obj["dest_port"] = "0:65535"
+
+
+    if not (firewall_policy_obj["policy_action"] == "ACCEPT" or firewall_policy_obj["policy_action"] == "DROP" ):
+        print("The Policy action is not valid it should be ACCEPT or DROP")
+        print(firewall_policy_obj)
+        exit()
+
+    #firewall_policy_list.append(firewall_policy_obj)
 
 
 existing_firewall_policies = []
@@ -333,7 +359,7 @@ with open(os.path.join(os.getcwd(), "Infrastructure","infrastructure.json"), "w"
     json.dump(network_data, f1,indent=4)
 
 
-
+print(f"The FirewallPolicies has run successfully at {current_time}")
 
 
 
